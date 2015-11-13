@@ -1,0 +1,77 @@
+.386
+.model flat, stdcall
+.stack 4096
+
+STD_OUTPUT_HANDLE EQU -11
+
+GetStdHandle PROTO NEAR32 stdcall, nStdHandle:DWORD
+
+WriteFile PROTO NEAR32 stdcall, 
+    hFile:DWORD, lpBuffer:NEAR32, nNumberOfBytesToWrite:DWORD, 
+    lpNumberOfBytesWritten:NEAR32, lpOverlapped:NEAR32
+
+ExitProcess PROTO NEAR32 stdcall, dwExitCode:DWORD
+
+.data
+  unsortedArray BYTE 5, 6, 0, 3, 2, 9, 1
+  unsortedArrayLen DWORD LENGTHOF unsortedArray
+  message BYTE "Hello, assembly!", 0Dh, 0Ah, 0
+  written WORD 0
+  hStdOut DWORD 0
+.data?
+  conOut BYTE LENGTHOF unsortedArray + 1 DUP(?)
+
+.code
+main PROC
+  INVOKE  GetStdHandle, STD_OUTPUT_HANDLE
+  mov hStdOut, eax
+
+;  INVOKE  WriteFile, 
+;    hStdOut,               ; File handle for screen
+;    NEAR32 PTR message,    ; Address of string
+;    LENGTHOF message,      ; Length of string
+;    NEAR32 PTR written,    ; Bytes written
+;    0                      ; Overlapped mode
+
+  mov ecx, LENGTHOF unsortedArray
+beforeSortOut:
+  mov al, [unsortedArray + ecx - 1]
+  add al, 48d
+  mov [conOut + ecx - 1], al
+  loop beforeSortOut
+  
+  mov [conOut + LENGTHOF unsortedArray], 0
+  
+  INVOKE  WriteFile, 
+    hStdOut,           
+    NEAR32 PTR conOut,  
+    LENGTHOF conOut,  
+    NEAR32 PTR written,
+    0                  
+
+outerLoop:
+  mov edx, 0 ; bool - to continue loop
+  mov ecx, unsortedArrayLen
+  innerLoop:
+    mov al, [unsortedArray + (ecx - 1)]
+    sub al, [unsortedArray + (ecx - 2)]
+    jc  swap
+    jmp endLoop
+    swap:
+      mov edx, 1 ; something needed to be swapped, set flag
+
+      mov al, [unsortedArray + (ecx - 1)]
+      xchg al, [unsortedArray + (ecx - 2)]
+      mov [unsortedArray + (ecx -1)], al
+    endLoop:
+      loop innerLoop
+  
+  mov eax, 1
+  sub eax, edx
+  jz outerLoop
+
+  mov eax, 0
+  ret
+main ENDP
+
+END main
