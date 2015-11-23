@@ -20,58 +20,64 @@ ExitProcess PROTO NEAR32 stdcall, dwExitCode:DWORD
   hStdOut DWORD 0
 .data?
   conOut BYTE LENGTHOF unsortedArray + 1 DUP(?)
+  numStr BYTE 24 DUP(?)
 
 .code
 main PROC
-  INVOKE  GetStdHandle, STD_OUTPUT_HANDLE
+  push  STD_OUTPUT_HANDLE
+  call  GetStdHandle
   mov hStdOut, eax
 
-;  INVOKE  WriteFile, 
-;    hStdOut,               ; File handle for screen
-;    NEAR32 PTR message,    ; Address of string
-;    LENGTHOF message,      ; Length of string
-;    NEAR32 PTR written,    ; Bytes written
-;    0                      ; Overlapped mode
+  mov   eax,  8
+  mov   edi,  OFFSET numStr
+  mov   ecx,  LENGTHOF numStr
+  call  uintToString
+  mov   numStr[esi], 0
 
-  mov ecx, LENGTHOF unsortedArray
-beforeSortOut:
-  mov al, [unsortedArray + ecx - 1]
-  add al, 48d
-  mov [conOut + ecx - 1], al
-  loop beforeSortOut
-  
-  mov [conOut + LENGTHOF unsortedArray], 0
-  
-  INVOKE  WriteFile, 
-    hStdOut,           
-    NEAR32 PTR conOut,  
-    LENGTHOF conOut,  
-    NEAR32 PTR written,
-    0                  
-
-outerLoop:
-  mov edx, 0 ; bool - to continue loop
-  mov ecx, unsortedArrayLen
-  innerLoop:
-    mov al, [unsortedArray + (ecx - 1)]
-    sub al, [unsortedArray + (ecx - 2)]
-    jc  swap
-    jmp endLoop
-    swap:
-      mov edx, 1 ; something needed to be swapped, set flag
-
-      mov al, [unsortedArray + (ecx - 1)]
-      xchg al, [unsortedArray + (ecx - 2)]
-      mov [unsortedArray + (ecx -1)], al
-    endLoop:
-      loop innerLoop
-  
-  mov eax, 1
-  sub eax, edx
-  jz outerLoop
+  push  0                   ; Overlapped mode
+  push  0                   ; Bytes written
+  push  LENGTHOF numStr     ; Length of string
+  push  OFFSET numStr       ; Address of string
+  push  hStdOut             ; File handle for screen
+  call  WriteFile
 
   mov eax, 0
   ret
 main ENDP
+
+;-----------------------------------------------------------
+; uintToString
+; Receives:
+;   eax - unsigned integer
+;   edi - out string
+;   ecx - out string length
+; Returns
+;   eax - number of characters written
+;-----------------------------------------------------------
+uintToString PROC USES edx ebx esi
+    xor esi,  esi
+
+L1: xor   edx,  edx
+    mov   ebx,  10
+    div   ebx
+    add   edx,  '0'
+    mov   [edi + (esi * 4)], edx
+    inc   esi
+    test  eax,  eax
+    jnz   L1
+
+    mov   eax,  esi
+    ret
+uintToString ENDP
+
+;-----------------------------------------------------------
+; arrayToString
+; Receives:
+;   esi - DWORD array
+;   ecx - array length
+;   edi - out string array
+;-----------------------------------------------------------
+arrayToString PROC
+arrayToString ENDP
 
 END main
