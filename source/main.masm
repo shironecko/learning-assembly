@@ -18,9 +18,9 @@ ExitProcess PROTO NEAR32 stdcall, dwExitCode:DWORD
   message BYTE "Hello, assembly!", 0Dh, 0Ah, 0
   written WORD 0
   hStdOut DWORD 0
+  numStr BYTE 24 DUP(0FFh)
 .data?
   conOut BYTE LENGTHOF unsortedArray + 1 DUP(?)
-  numStr BYTE 24 DUP(?)
 
 .code
 main PROC
@@ -28,11 +28,11 @@ main PROC
   call  GetStdHandle
   mov hStdOut, eax
 
-  mov   eax,  8
+  mov   eax,  128
   mov   edi,  OFFSET numStr
   mov   ecx,  LENGTHOF numStr
   call  uintToString
-  mov   numStr[esi], 0
+  mov   numStr[eax], 0
 
   push  0                   ; Overlapped mode
   push  0                   ; Bytes written
@@ -54,18 +54,18 @@ main ENDP
 ; Returns
 ;   eax - number of characters written
 ;-----------------------------------------------------------
-uintToString PROC USES edx ebx esi
-    xor esi,  esi
+uintToString PROC USES ebx ecx edx esi
+    mov   ebx,  10
+    mov   esi,  0
 
 L1: xor   edx,  edx
-    mov   ebx,  10
     div   ebx
-    add   edx,  '0'
-    mov   [edi + (esi * 4)], edx
+    add    dl,  '0'
+    mov   [edi + esi], dl
     inc   esi
     test  eax,  eax
     jnz   L1
-
+    
     mov   eax,  esi
     ret
 uintToString ENDP
