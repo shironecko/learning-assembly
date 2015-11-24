@@ -36,7 +36,7 @@ main PROC
 
   push  0                   ; Overlapped mode
   push  0                   ; Bytes written
-  push  LENGTHOF numStr     ; Length of string
+  push  eax                 ; Length of string
   push  OFFSET numStr       ; Address of string
   push  hStdOut             ; File handle for screen
   call  WriteFile
@@ -60,11 +60,18 @@ uintToString PROC USES ebx ecx edx esi
 
 L1: xor   edx,  edx
     div   ebx
-    add    dl,  '0'
-    mov   [edi + esi], dl
+    add   edx,  '0'
+    push  edx
     inc   esi
     test  eax,  eax
     jnz   L1
+
+    mov   ecx, esi
+    xor   esi, esi
+L2: pop   eax
+    mov   [edi + esi], al
+    inc   esi
+    loop  L2
     
     mov   eax,  esi
     ret
