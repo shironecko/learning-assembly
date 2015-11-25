@@ -12,7 +12,7 @@ if defined VS140COMNTOOLS         ( set VSTOOLS=VS140COMNTOOLS
 
 call "%%%VSTOOLS%%%vsvars32.bat"
 call "%%%VSTOOLS%%%..\..\VC\bin\ml" ^
-  /nologo /safeseh /Febuild.exe /Sa /Flbuild.masm /W3 /Zi ..\source\main.masm ^
+  /nologo /safeseh /Febuild.exe /Sa /W3 /Zi ..\source\main.asm ^
   /link /nologo /subsystem:console kernel32.lib
 
 popd
